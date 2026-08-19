@@ -1,10 +1,43 @@
 #include "triage_clock_core.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cwctype>
 #include <utility>
 
 namespace triage_clock {
+
+bool IntervalTimer::Start(double now_seconds, double duration_seconds) noexcept {
+    if (!std::isfinite(now_seconds) || !std::isfinite(duration_seconds) || duration_seconds <= 0.0) {
+        Reset();
+        return false;
+    }
+    deadline_seconds_ = now_seconds + duration_seconds;
+    duration_seconds_ = duration_seconds;
+    remaining_seconds_ = duration_seconds;
+    running_ = true;
+    expired_ = false;
+    return true;
+}
+
+void IntervalTimer::Tick(double now_seconds) noexcept {
+    if (!running_ || !std::isfinite(now_seconds)) {
+        return;
+    }
+    remaining_seconds_ = std::max(0.0, deadline_seconds_ - now_seconds);
+    if (remaining_seconds_ <= 0.0) {
+        running_ = false;
+        expired_ = true;
+    }
+}
+
+void IntervalTimer::Reset() noexcept {
+    deadline_seconds_ = 0.0;
+    duration_seconds_ = 0.0;
+    remaining_seconds_ = 0.0;
+    running_ = false;
+    expired_ = false;
+}
 
 std::wstring Trim(std::wstring value) {
     const auto non_space = [](wchar_t ch) { return !std::iswspace(ch); };
@@ -27,6 +60,15 @@ std::wstring FormatDuration(int seconds) {
     } else {
         swprintf_s(buffer, L"%02d:%02d", minutes, secs);
     }
+    return buffer;
+}
+
+std::wstring FormatClockTime(int hour, int minute, int second) {
+    hour = std::clamp(hour, 0, 23);
+    minute = std::clamp(minute, 0, 59);
+    second = std::clamp(second, 0, 59);
+    wchar_t buffer[16]{};
+    swprintf_s(buffer, L"%02d:%02d:%02d", hour, minute, second);
     return buffer;
 }
 
@@ -142,4 +184,4 @@ int Plan::total_remaining_seconds() const noexcept {
     return total;
 }
 
-}  // namespace triage_clock
+} // namespace triage_clock

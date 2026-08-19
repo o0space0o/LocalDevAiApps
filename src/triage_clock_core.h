@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -9,6 +10,26 @@ namespace triage_clock {
 struct Action {
     std::wstring title;
     int minutes = 0;
+};
+
+// Reusable monotonic countdown for applications that need sub-minute timed work.
+class IntervalTimer {
+public:
+    bool Start(double now_seconds, double duration_seconds) noexcept;
+    void Tick(double now_seconds) noexcept;
+    void Reset() noexcept;
+
+    bool running() const noexcept { return running_; }
+    bool expired() const noexcept { return expired_; }
+    double duration_seconds() const noexcept { return duration_seconds_; }
+    double remaining_seconds() const noexcept { return remaining_seconds_; }
+
+private:
+    double deadline_seconds_ = 0.0;
+    double duration_seconds_ = 0.0;
+    double remaining_seconds_ = 0.0;
+    bool running_ = false;
+    bool expired_ = false;
 };
 
 class Plan {
@@ -40,5 +61,6 @@ private:
 
 std::wstring Trim(std::wstring value);
 std::wstring FormatDuration(int seconds);
+std::wstring FormatClockTime(int hour, int minute, int second);
 
-}  // namespace triage_clock
+} // namespace triage_clock
