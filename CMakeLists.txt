@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(LocalDevAiAppSpace VERSION 1.4.0 LANGUAGES CXX)
+project(LocalDevAiAppSpace VERSION 1.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,6 +42,11 @@ target_compile_definitions(space_3d_core PUBLIC UNICODE _UNICODE WIN32_LEAN_AND_
 target_include_directories(space_3d_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(space_3d_core PUBLIC user32 gdi32)
 
+add_library(skeleton_network STATIC src/skeleton_network.cpp src/skeleton_network.h)
+target_compile_definitions(skeleton_network PUBLIC UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_include_directories(skeleton_network PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_link_libraries(skeleton_network PUBLIC space_3d_core ws2_32)
+
 add_library(space_3d_routine STATIC
     src/space_3d_routine.cpp src/space_3d_routine.h
     src/space_3d_runtime.cpp src/space_3d_runtime.h
@@ -52,7 +57,11 @@ target_link_libraries(space_3d_routine PUBLIC space_3d_core triage_clock_core)
 
 add_executable(space_3d WIN32 src/space_3d_gui.cpp)
 target_compile_definitions(space_3d PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
-target_link_libraries(space_3d PRIVATE space_3d_routine)
+target_link_libraries(space_3d PRIVATE space_3d_routine skeleton_network)
+
+add_executable(SkelletonClient WIN32 src/skelleton_client_gui.cpp)
+target_compile_definitions(SkelletonClient PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_link_libraries(SkelletonClient PRIVATE skeleton_network)
 
 add_executable(space_3d_probe src/space_3d_probe.cpp)
 target_compile_definitions(space_3d_probe PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
@@ -62,9 +71,17 @@ add_executable(skeleton_body_probe src/skeleton_body_probe.cpp)
 target_compile_definitions(skeleton_body_probe PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_link_libraries(skeleton_body_probe PRIVATE space_3d_core)
 
+add_executable(skeleton_network_probe src/skeleton_network_probe.cpp)
+target_compile_definitions(skeleton_network_probe PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_link_libraries(skeleton_network_probe PRIVATE skeleton_network)
+
 add_executable(space_3d_routine_probe src/space_3d_routine_probe.cpp)
 target_compile_definitions(space_3d_routine_probe PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_link_libraries(space_3d_routine_probe PRIVATE space_3d_routine)
+
+add_executable(space_3d_scene_verify_probe src/space_3d_scene_verify_probe.cpp)
+target_compile_definitions(space_3d_scene_verify_probe PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
+target_link_libraries(space_3d_scene_verify_probe PRIVATE space_3d_core)
 
 add_executable(ldai_launcher src/ldai_launcher.cpp)
 target_compile_definitions(ldai_launcher PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX)
@@ -76,9 +93,13 @@ add_test(NAME space_3d_probe_test COMMAND space_3d_probe)
 set_tests_properties(space_3d_probe_test PROPERTIES TIMEOUT 30)
 add_test(NAME skeleton_body_probe_test COMMAND skeleton_body_probe)
 set_tests_properties(skeleton_body_probe_test PROPERTIES TIMEOUT 30)
+add_test(NAME skeleton_network_probe_test COMMAND skeleton_network_probe)
+set_tests_properties(skeleton_network_probe_test PROPERTIES TIMEOUT 30)
 add_test(NAME triage_clock_probe_test COMMAND triage_clock_probe)
 set_tests_properties(triage_clock_probe_test PROPERTIES TIMEOUT 30)
 add_test(NAME space_3d_routine_probe_test COMMAND space_3d_routine_probe)
 set_tests_properties(space_3d_routine_probe_test PROPERTIES TIMEOUT 30)
+add_test(NAME space_3d_scene_verify_probe_test COMMAND space_3d_scene_verify_probe)
+set_tests_properties(space_3d_scene_verify_probe_test PROPERTIES TIMEOUT 30)
 add_test(NAME ldai_launcher_test COMMAND ldai_launcher)
 set_tests_properties(ldai_launcher_test PROPERTIES TIMEOUT 30)

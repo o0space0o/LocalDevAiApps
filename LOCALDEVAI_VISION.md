@@ -14,9 +14,11 @@ Inventory (scanned source)
 - skeleton_body_probe
 - triage_clock (WIN32 GUI) + triage_clock_core + triage_clock_probe
 - webcam_preview, stream_core utilities
+- ldai_launcher (new: app catalog)
+- space_3d_scene_verify_probe (new: scene serialization verification)
 
 Key reusable components
-- space_3d_core: 3D engine, physics, serialization
+- space_3d_core: 3D engine, physics, serialization (Serialize/Deserialize)
 - triage_clock_core: plan/timer logic
 - stream_core: video/capture helper
 
@@ -26,38 +28,25 @@ Recent research sources
 - ONNX Runtime overview — https://onnxruntime.ai/docs/
 - OpenAI Agents guidance — https://developers.openai.com/api/docs/guides/agents
 
-Three proposed milestones (from local-AI critique)
-1) App Catalog / Lightweight Launcher (chosen)
-   - User value: Fast, discoverable list of installed workspace apps and metadata; first step toward a launcher UI and catalog.
-   - Touched files: CMakeLists.txt (add target), new src/ldai_launcher.cpp, LOCALDEVAI_VISION.md (update).
-   - ARM64 feasibility: trivial (C++17 filesystem + console app). Build/testable with existing toolchain.
-   - Test: noninteractive probe checks presence of space_3d.exe and triage_clock.exe in build folder and prints LDAI_LAUNCHER_OK.
-   - Risks: low. No admin or runtime deps. No approval required.
+Completed milestones
 
-2) Save/Load Scene Interop & Versioned Documents
-   - User value: Reproducible scene sharing and validated round-trips for 3d_space documents.
-   - Touched files: space_3d_core serialization tests, UI save/load handlers, sample scenes.
-   - ARM64 feasibility: medium (already has Serialize/Deserialize). Requires careful test data.
-   - Test: round-trip save/load of serialized document and consistency checks.
-   - Risks: moderate (file parsing edge cases). No special approval.
+### Milestone 1: App Catalog / Lightweight Launcher (completed in prior run)
+- User value: Fast, discoverable list of installed workspace apps and metadata; first step toward a launcher UI and catalog.
+- Implementation: src/ldai_launcher.cpp
+- Test: noninteractive probe checks presence of space_3d.exe and triage_clock.exe in build folder and prints LDAI_LAUNCHER_OK.
+- Status: ✓ Passed configure/build/CTest on native Windows ARM64. Launcher prints exact success marker.
 
-3) Local ML Inference Baseline (on-device)
-   - User value: Add an offline ML capability for simple classification (e.g., scene tagger) using ONNX Runtime or Windows ML.
-   - Touched files: new ml/ folder, CMake entries, optional provider integration.
-   - ARM64 feasibility: depends on installed ONNX Runtime provider; preliminary research required.
-   - Test: run a tiny ONNX model inference CPU-only with deterministic output.
-   - Risks: higher — binary dependencies, model download, and licensing; requires explicit user approval before fetching models or adding heavy deps.
-
-Decision: implement milestone #1 (App Catalog / Lightweight Launcher).
-Rationale: smallest useful step, low risk, immediately testable on ARM64 with current toolchain, and provides infrastructure reused by later launcher UI and catalog features.
-
-Completed action in this run
-- Added a new console executable `ldai_launcher` that inspects the ARM64 build output folder for known workspace apps and validates they exist. The probe prints `LDAI_LAUNCHER_OK` on success.
+### Milestone 2: Scene Document Verification & Round-Trip Test (completed this run)
+- User value: Reproducible scene sharing and validated round-trips for space_3d documents; proves serialization is deterministic.
+- Implementation: src/space_3d_scene_verify_probe.cpp (new)
+- Changes: Added probe to CMakeLists.txt as space_3d_scene_verify_probe executable and test target.
+- Test: Creates 3 test balls, serializes scene, deserializes into fresh engine, verifies ball count/properties match, re-serializes and validates determinism, prints SPACE_3D_SCENE_VERIFY_OK on success.
+- Status: ✓ Passed fresh configure/build/CTest on native Windows ARM64. Probe prints exact success marker. Ball properties (position, velocity, radius, mass) verified within epsilon tolerance.
 
 Next milestones (priority order)
-1. Launcher UI with manifest parsing and app metadata (after this catalog exists).
-2. Scene document library and verification tests for space_3d.
-3. Optional on-device ML baseline (requires separate approval and dependency plan).
+1. Launcher UI with manifest parsing and app metadata (reuse ldai_launcher core + add WIN32 GUI panel).
+2. Optional on-device ML baseline (requires separate approval and dependency plan).
+3. Shared settings/storage service for cross-app configuration.
 
 Risks & approvals
 - Any ML model downloads or runtime additions require explicit user approval.
@@ -69,4 +58,4 @@ Research sources (short)
 - https://onnxruntime.ai/docs/
 - https://developers.openai.com/api/docs/guides/agents
 
-End of change.
+End of milestone record.
